@@ -23,7 +23,7 @@ USER_ID_TO_MEMBER_MAP = {
 # KHỞI TẠO ỨNG DỤNG
 # ==============================================================================
 app = Flask(__name__)
-bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+# KHÔNG KHỞI TẠO BOT Ở ĐÂY NỮA, CHÚNG TA SẼ TẠO SAU TRONG TỪNG YÊU CẦU
 
 def get_worksheet():
     """Hàm kết nối và lấy worksheet - Sử dụng Secret File."""
@@ -33,9 +33,11 @@ def get_worksheet():
     spreadsheet = client.open(GOOGLE_SHEET_NAME)
     return spreadsheet.worksheet(WORKSHEET_NAME)
 
-# --- TÁI CẤU TRÚC LOGIC VÀO MỘT HÀM ASYNC DUY NHẤT ---
 async def process_update_async(update):
     """Hàm bất đồng bộ xử lý toàn bộ logic cho một tin nhắn."""
+    # TẠO MỘT ĐỐI TƯỢNG BOT MỚI SẠCH SẼ CHO YÊU CẦU NÀY
+    bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+    
     msg = update.message
     if not msg or not msg.text:
         return
@@ -47,7 +49,6 @@ async def process_update_async(update):
         return
 
     try:
-        # Tương tác với Google Sheet (hành động đồng bộ)
         worksheet = get_worksheet()
         current_day = datetime.now().day
         target_row = current_day + 2
@@ -68,14 +69,15 @@ async def process_update_async(update):
             worksheet.update_cell(target_row, user_col, new_users)
             reply_text = f"✅ Đã ghi nhận {new_users} user mới cho {member_name}."
         
-        # Gửi tin nhắn trả lời (hành động bất đồng bộ)
         if reply_text:
             await bot.send_message(chat_id=msg.chat_id, text=reply_text)
             
     except Exception as e:
         print(f"Lỗi khi đang xử lý tin nhắn: {e}")
-        # Gửi tin nhắn lỗi (hành động bất đồng bộ)
         await bot.send_message(chat_id=msg.chat_id, text=f"Đã có lỗi xảy ra khi xử lý lệnh của bạn.")
+    
+    # Giải phóng tài nguyên bot sau khi xử lý xong
+    await bot.shutdown()
 
 # ==============================================================================
 # CÁC ROUTE CỦA WEBHOOK
@@ -85,9 +87,13 @@ def webhook_handler():
     """Endpoint chính nhận Webhook và gọi hàm xử lý bất đồng bộ."""
     if request.is_json:
         update_data = request.get_json()
-        update = telegram.Update.de_json(update_data, bot)
-        # Chạy hàm async từ context đồng bộ của Flask
-        asyncio.run(process_update_async(update))
+        # Tạo một đối tượng bot tạm thời chỉ để phân tích cú pháp update
+        temp_bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+        update = telegram.Update.de_json(update_data, temp_bot)
+        
+        if update.message:
+            asyncio.run(process_update_async(update))
+            
     return 'OK', 200
 
 @app.route('/')
