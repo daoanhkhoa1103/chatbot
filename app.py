@@ -1,4 +1,5 @@
 import os
+import json
 import telegram
 from flask import Flask, request
 import gspread
@@ -24,13 +25,18 @@ app = Flask(__name__)
 bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
 def get_worksheet():
-    """Hàm kết nối và lấy worksheet báo cáo."""
-    # Bạn nên lưu file credentials.json vào một biến môi trường
-    # Hoặc đảm bảo file này được tải lên cùng code của bạn
-    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-    # Ở đây ta giả sử bạn tải file credentials.json lên cùng code
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', 
-        ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive'])
+    """Hàm kết nối và lấy worksheet - Phiên bản đọc từ Biến Môi Trường."""
+    # Lấy chuỗi JSON từ biến môi trường
+    creds_json_string = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    if not creds_json_string:
+        raise Exception("Lỗi: Biến môi trường GOOGLE_CREDENTIALS_JSON chưa được cài đặt trên Render.")
+
+    # Chuyển chuỗi JSON thành dictionary
+    creds_dict = json.loads(creds_json_string)
+
+    # Xác thực bằng dictionary thay vì đọc từ file
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     spreadsheet = client.open(GOOGLE_SHEET_NAME)
     return spreadsheet.worksheet(WORKSHEET_NAME)
