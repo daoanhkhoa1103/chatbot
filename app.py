@@ -15,7 +15,7 @@ GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 CHAT_ID = os.environ.get('CHAT_ID') # CHAT_ID hiện tại chưa dùng trong webhook, nhưng có thể cần sau này
 
 # Các thông tin cấu hình khác có thể đặt cố định hoặc đọc từ biến môi trường
-WORKSHEET_NAME = "Báo Cáo Tháng 7" 
+WORKSHEET_NAME = "vol_t7" 
 TEAM_MEMBERS = ["Khoa Dao", "Hung Luu", "Thao Vy", "Thành Viên 4", "Thành Viên 5"]
 
 # Ánh xạ User ID của thành viên với tên
