@@ -7,16 +7,16 @@ from datetime import datetime
 
 # --- Lấy thông tin từ Biến Môi Trường (An toàn hơn) ---
 # Thay vì hardcode, ta sẽ đọc từ Environment Variables trên server
-TELEGRAM_BOT_TOKEN = os.environ.get('7771408078:AAHfFU7C9nQbz9DbFkc6o4pJ1wfyvqTUwEs')
-CHAT_ID = os.environ.get('-4874023632')
-GOOGLE_SHEET_NAME = os.environ.get('TEAM BD 7_25')
-WORKSHEET_NAME = "vol_t7" # Bạn có thể để cố định hoặc cũng đưa vào biến môi trường
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+CHAT_ID = os.environ.get('CHAT_ID')
+GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
+WORKSHEET_NAME = "Báo Cáo Tháng 7" # Bạn có thể để cố định hoặc cũng đưa vào biến môi trường
 
 # --- Thông tin cấu hình khác ---
-TEAM_MEMBERS = ["Khoa Dao", "Hung Luu", "Thao Vy", "Thành Viên 4", "Thành Viên 5"]
+TEAM_MEMBERS = ["Thành Viên 1", "Thành Viên 2", "Thành Viên 3", "Thành Viên 4", "Thành Viên 5"]
 USER_ID_TO_MEMBER_MAP = {
-    7626921008: "Khoa Dao", 515315411: "Hung Luu",
-    5939326062: "Thao Vy", 444555666: "Thành Viên 4", 777888999: "Thành Viên 5",
+    123456789: "Thành Viên 1", 987654321: "Thành Viên 2",
+    111222333: "Thành Viên 3", 444555666: "Thành Viên 4", 777888999: "Thành Viên 5",
 }
 
 # --- Thiết lập Flask và Bot ---
