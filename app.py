@@ -24,21 +24,23 @@ USER_ID_TO_MEMBER_MAP = {
 app = Flask(__name__)
 bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
+# Bỏ 'import json' nếu có, không cần nữa
+# import os cũng không cần cho hàm này
+
 def get_worksheet():
-    """Hàm kết nối và lấy worksheet - Phiên bản đọc từ Biến Môi Trường."""
-    # Lấy chuỗi JSON từ biến môi trường
-    creds_json_string = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-    if not creds_json_string:
-        raise Exception("Lỗi: Biến môi trường GOOGLE_CREDENTIALS_JSON chưa được cài đặt trên Render.")
-
-    # Chuyển chuỗi JSON thành dictionary
-    creds_dict = json.loads(creds_json_string)
-
-    # Xác thực bằng dictionary thay vì đọc từ file
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    """Hàm kết nối và lấy worksheet - Đọc từ Secret File."""
+    # Render sẽ đặt Secret File của bạn tại đường dẫn này
+    # Hàm này sẽ tìm file credentials.json mà bạn đã tạo ở Bước A
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        'credentials.json',
+        ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    )
     client = gspread.authorize(creds)
-    spreadsheet = client.open(GOOGLE_SHEET_NAME)
+    
+    # Lấy GOOGLE_SHEET_NAME từ biến môi trường
+    sheet_name = os.environ.get('GOOGLE_SHEET_NAME')
+    spreadsheet = client.open(sheet_name)
+    
     return spreadsheet.worksheet(WORKSHEET_NAME)
 
 # --- Endpoint chính để nhận Webhook từ Telegram ---
