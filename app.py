@@ -8,25 +8,15 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 # ==============================================================================
-# PHẦN THIẾT LẬP - ĐÃ CẬP NHẬT VỚI THÔNG TIN CỦA BẠN
+# PHẦN THIẾT LẬP (Giữ nguyên)
 # ==============================================================================
-# Lấy thông tin nhạy cảm từ Biến Môi Trường (Environment Variables)
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 
-# Thông tin cụ thể của team bạn
 WORKSHEET_NAME = "vol_t7"
-TEAM_MEMBERS = [
-    "Khoa Dao",
-    "Hung Luu",
-    "Thao Vy"
-]
-
-# Ánh xạ User ID của thành viên với tên
+TEAM_MEMBERS = ["Khoa Dao", "Hung Luu", "Thao Vy"]
 USER_ID_TO_MEMBER_MAP = {
-    7626921008: "Khoa Dao",
-    515315411: "Hung Luu",
-    5939326062: "Thao Vy",
+    7626921008: "Khoa Dao", 515315411: "Hung Luu", 5939326062: "Thao Vy",
 }
 
 # ==============================================================================
@@ -43,57 +33,63 @@ def get_worksheet():
     spreadsheet = client.open(GOOGLE_SHEET_NAME)
     return spreadsheet.worksheet(WORKSHEET_NAME)
 
-def process_message(msg):
-    """Hàm xử lý logic chính của bot."""
+# --- TÁI CẤU TRÚC LOGIC VÀO MỘT HÀM ASYNC DUY NHẤT ---
+async def process_update_async(update):
+    """Hàm bất đồng bộ xử lý toàn bộ logic cho một tin nhắn."""
+    msg = update.message
     if not msg or not msg.text:
         return
 
     user_id = msg.from_user.id
     message_text = msg.text.strip().lower()
 
-    # Bỏ qua tin nhắn từ người không có trong danh sách
     if user_id not in USER_ID_TO_MEMBER_MAP:
         return
 
     try:
+        # Tương tác với Google Sheet (hành động đồng bộ)
         worksheet = get_worksheet()
         current_day = datetime.now().day
         target_row = current_day + 2
         member_name = USER_ID_TO_MEMBER_MAP[user_id]
         member_index = TEAM_MEMBERS.index(member_name)
 
-        # Xử lý lệnh báo cáo Volume
+        reply_text = ""
+
         if message_text.startswith('/vol '):
             volume_today = float(message_text[5:])
-            cumulative_col = 2 + (member_index * 4) # Cột "Volume Lũy Tiến"
+            cumulative_col = 2 + (member_index * 4)
             worksheet.update_cell(target_row, cumulative_col, volume_today)
-            asyncio.run(bot.send_message(chat_id=msg.chat_id, text=f"✅ Đã ghi nhận vol lũy tiến {volume_today} cho {member_name}."))
+            reply_text = f"✅ Đã ghi nhận vol lũy tiến {volume_today} cho {member_name}."
 
-        # Xử lý lệnh báo cáo User mới
         elif message_text.startswith('/user '):
             new_users = int(message_text[6:])
-            user_col = 4 + (member_index * 4) # Cột "User Mới"
+            user_col = 4 + (member_index * 4)
             worksheet.update_cell(target_row, user_col, new_users)
-            asyncio.run(bot.send_message(chat_id=msg.chat_id, text=f"✅ Đã ghi nhận {new_users} user mới cho {member_name}."))
+            reply_text = f"✅ Đã ghi nhận {new_users} user mới cho {member_name}."
+        
+        # Gửi tin nhắn trả lời (hành động bất đồng bộ)
+        if reply_text:
+            await bot.send_message(chat_id=msg.chat_id, text=reply_text)
             
     except Exception as e:
         print(f"Lỗi khi đang xử lý tin nhắn: {e}")
-        asyncio.run(bot.send_message(chat_id=msg.chat_id, text=f"Đã có lỗi xảy ra: {e}"))
+        # Gửi tin nhắn lỗi (hành động bất đồng bộ)
+        await bot.send_message(chat_id=msg.chat_id, text=f"Đã có lỗi xảy ra khi xử lý lệnh của bạn.")
 
 # ==============================================================================
 # CÁC ROUTE CỦA WEBHOOK
 # ==============================================================================
 @app.route('/webhook', methods=['POST'])
 def webhook_handler():
-    """Endpoint chính để nhận Webhook từ Telegram."""
+    """Endpoint chính nhận Webhook và gọi hàm xử lý bất đồng bộ."""
     if request.is_json:
         update_data = request.get_json()
         update = telegram.Update.de_json(update_data, bot)
-        if update.message:
-            process_message(update.message)
+        # Chạy hàm async từ context đồng bộ của Flask
+        asyncio.run(process_update_async(update))
     return 'OK', 200
 
 @app.route('/')
 def index():
-    """Route để kiểm tra sức khỏe của dịch vụ."""
     return 'Bot is running!'
