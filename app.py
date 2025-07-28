@@ -13,10 +13,10 @@ from datetime import datetime
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 
-WORKSHEET_NAME = "vol_t7"
-TEAM_MEMBERS = ["Khoa Dao", "Hung Luu", "Thao Vy"]
+WORKSHEET_NAME = "Vol_T8"
+TEAM_MEMBERS = ["KhoaDA", "VyDTT", "YenTTH", "PhatLH","QuyenTTS"]
 USER_ID_TO_MEMBER_MAP = {
-    7626921008: "Khoa Dao", 515315411: "Hung Luu", 5939326062: "Thao Vy",
+    7626921008: "KhoaDA", 5939326062: "VyDTT", 5050768441: "YenTTH", 5620934782: "PhatLH", 6885129892: "QuyenTTS"
 }
 
 # ==============================================================================
@@ -55,23 +55,41 @@ async def process_update_async(update):
         member_name = USER_ID_TO_MEMBER_MAP[user_id]
         member_index = TEAM_MEMBERS.index(member_name)
 
+        # Định nghĩa các cột dựa trên cấu trúc mới: Mỗi thành viên chiếm 3 cột (User, Vol tổng, Vol ngày)
+        # Base: KhoaDA bắt đầu từ cột 3 (C: User, D: Vol tổng, E: Vol ngày)
+        user_col = 3 + (member_index * 3)
+        vol_tong_col = 4 + (member_index * 3)
+        vol_ngay_col = 5 + (member_index * 3)
+
         reply_text = ""
 
         if message_text.startswith('/vol '):
-            volume_today = float(message_text[5:])
-            cumulative_col = 2 + (member_index * 4)
-            worksheet.update_cell(target_row, cumulative_col, volume_today)
-            reply_text = f"✅ Đã ghi nhận vol lũy tiến {volume_today} cho {member_name}."
+            volume_tong = float(message_text[5:])
+            
+            # Lấy vol tổng ngày hôm trước
+            vol_tong_yesterday_str = worksheet.cell(target_row - 1, vol_tong_col).value or '0'
+            vol_tong_yesterday = float(vol_tong_yesterday_str.replace(',', '') if vol_tong_yesterday_str else 0)
+            
+            # Tính vol ngày
+            vol_ngay = volume_tong - vol_tong_yesterday
+            
+            # Ghi vol tổng và vol ngày
+            worksheet.update_cell(target_row, vol_tong_col, volume_tong)
+            worksheet.update_cell(target_row, vol_ngay_col, vol_ngay)
+            
+            reply_text = f"✅ Đã ghi nhận vol tổng {volume_tong} cho {member_name}. Vol ngày: {vol_ngay}."
 
         elif message_text.startswith('/user '):
-            new_users = int(message_text[6:])
-            user_col = 4 + (member_index * 4)
-            worksheet.update_cell(target_row, user_col, new_users)
-            reply_text = f"✅ Đã ghi nhận {new_users} user mới cho {member_name}."
+            users = int(message_text[6:])
+            worksheet.update_cell(target_row, user_col, users)
+            reply_text = f"✅ Đã ghi nhận {users} user cho {member_name}."
         
         if reply_text:
             await bot.send_message(chat_id=msg.chat_id, text=reply_text)
             
+    except ValueError as ve:
+        print(f"Lỗi giá trị input: {ve}")
+        await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số hợp lệ (ví dụ: /vol 100.5 hoặc /user 10).")
     except Exception as e:
         print(f"Lỗi khi đang xử lý tin nhắn: {e}")
         await bot.send_message(chat_id=msg.chat_id, text=f"Đã có lỗi xảy ra khi xử lý lệnh của bạn.")
