@@ -14,9 +14,9 @@ TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 
 WORKSHEET_NAME = "Vol_T8"
-TEAM_MEMBERS = ["KhoaDA", "VyDTT", "YenTTH", "PhatLH","QuyenTTS"]
+TEAM_MEMBERS = ["KhoaDA", "VyDTT", "YenTTH", "PhatLH","QuyenTTS", "HungLD"]
 USER_ID_TO_MEMBER_MAP = {
-    7626921008: "KhoaDA", 5939326062: "VyDTT", 5050768441: "YenTTH", 5620934782: "PhatLH", 6885129892: "QuyenTTS"
+    7626921008: "KhoaDA", 5939326062: "VyDTT", 5050768441: "YenTTH", 5620934782: "PhatLH", 6885129892: "QuyenTTS", 515315411: "HungLD"
 }
 
 # ==============================================================================
