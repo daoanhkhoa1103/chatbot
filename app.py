@@ -66,16 +66,16 @@ async def process_update_async(update):
         if message_text.startswith('/vol '):
             vol_str = message_text[5:].strip().replace(',', '')  # Loại bỏ dấu phẩy để xử lý số có phân cách nghìn
             try:
-                volume_tong = float(vol_str)
+                volume_tong = int(vol_str)  # Thay đổi từ float sang int
             except ValueError as ve:
                 print(f"Lỗi giá trị input: {ve}")
-                await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số hợp lệ (ví dụ: /vol 100.5 hoặc /vol 1000, không dùng dấu cách trong số).")
+                await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số nguyên hợp lệ (ví dụ: /vol 1000, không dùng dấu chấm thập phân hoặc dấu cách trong số).")
                 return  # Thoát sớm để tránh xử lý tiếp
             
             # Lấy vol tổng ngày hôm trước
             vol_tong_yesterday_str = worksheet.cell(target_row - 1, vol_tong_col).value or '0'
             vol_tong_yesterday_str = vol_tong_yesterday_str.replace(',', '')  # Đảm bảo loại dấu phẩy nếu có
-            vol_tong_yesterday = float(vol_tong_yesterday_str if vol_tong_yesterday_str else 0)
+            vol_tong_yesterday = int(vol_tong_yesterday_str if vol_tong_yesterday_str else 0)  # Thay đổi sang int
             
             # Tính vol ngày
             vol_ngay = volume_tong - vol_tong_yesterday
