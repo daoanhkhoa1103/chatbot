@@ -14,7 +14,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 
 WORKSHEET_NAME = "Vol_T8"
-TEAM_MEMBERS = ["KhoaDA", "VyDTT", "YenTTH", "PhatLH", "QuyenTTS", "HungLD"]
+TEAM_MEMBERS = ["KhoaDA", "VyDTT", "YenTTH", "PhatLH","QuyenTTS", "HungLD"]
 USER_ID_TO_MEMBER_MAP = {
     7626921008: "KhoaDA", 5939326062: "VyDTT", 5050768441: "YenTTH", 5620934782: "PhatLH", 6885129892: "QuyenTTS", 515315411: "HungLD"
 }
@@ -53,9 +53,12 @@ async def process_update_async(update):
         member_name = USER_ID_TO_MEMBER_MAP[user_id]
         member_index = TEAM_MEMBERS.index(member_name)
 
-        user_col = 3 + (member_index * 3)
-        vol_tong_col = 4 + (member_index * 3)
-        vol_ngay_col = 5 + (member_index * 3)
+        # Định nghĩa các cột dựa trên cấu trúc: Mỗi thành viên chiếm 4 cột (User, Vol tổng, Vol ngày, KPI)
+        # Bot chỉ ghi User, Vol tổng, Vol ngày; KPI là công thức trong sheet
+        # Base: KhoaDA bắt đầu từ cột 3 (C: User, D: Vol tổng, E: Vol ngày, F: KPI)
+        user_col = 3 + (member_index * 4)
+        vol_tong_col = 4 + (member_index * 4)
+        vol_ngay_col = 5 + (member_index * 4)
 
         reply_text = ""
 
@@ -67,6 +70,7 @@ async def process_update_async(update):
                 return
             volume_tong = int(vol_str)
             
+            # Lấy vol tổng ngày hôm trước
             vol_tong_yesterday_str = worksheet.cell(target_row - 1, vol_tong_col).value or '0'
             vol_tong_yesterday_str = vol_tong_yesterday_str.replace(',', '')
             if not vol_tong_yesterday_str.isdigit():
@@ -74,8 +78,10 @@ async def process_update_async(update):
             else:
                 vol_tong_yesterday = int(vol_tong_yesterday_str)
             
+            # Tính vol ngày
             vol_ngay = volume_tong - vol_tong_yesterday
             
+            # Ghi vol tổng và vol ngày
             worksheet.update_cell(target_row, vol_tong_col, volume_tong)
             worksheet.update_cell(target_row, vol_ngay_col, vol_ngay)
             
