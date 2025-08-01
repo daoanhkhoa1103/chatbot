@@ -64,11 +64,18 @@ async def process_update_async(update):
         reply_text = ""
 
         if message_text.startswith('/vol '):
-            volume_tong = float(message_text[5:])
+            vol_str = message_text[5:].strip().replace(',', '')  # Loại bỏ dấu phẩy để xử lý số có phân cách nghìn
+            try:
+                volume_tong = float(vol_str)
+            except ValueError as ve:
+                print(f"Lỗi giá trị input: {ve}")
+                await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số hợp lệ (ví dụ: /vol 100.5 hoặc /vol 1000, không dùng dấu cách trong số).")
+                return  # Thoát sớm để tránh xử lý tiếp
             
             # Lấy vol tổng ngày hôm trước
             vol_tong_yesterday_str = worksheet.cell(target_row - 1, vol_tong_col).value or '0'
-            vol_tong_yesterday = float(vol_tong_yesterday_str.replace(',', '') if vol_tong_yesterday_str else 0)
+            vol_tong_yesterday_str = vol_tong_yesterday_str.replace(',', '')  # Đảm bảo loại dấu phẩy nếu có
+            vol_tong_yesterday = float(vol_tong_yesterday_str if vol_tong_yesterday_str else 0)
             
             # Tính vol ngày
             vol_ngay = volume_tong - vol_tong_yesterday
@@ -80,16 +87,20 @@ async def process_update_async(update):
             reply_text = f"✅ Đã ghi nhận vol tổng {volume_tong} cho {member_name}. Vol ngày: {vol_ngay}."
 
         elif message_text.startswith('/user '):
-            users = int(message_text[6:])
+            user_str = message_text[6:].strip().replace(',', '')  # Tương tự, xử lý dấu phẩy cho /user
+            try:
+                users = int(user_str)
+            except ValueError as ve:
+                print(f"Lỗi giá trị input: {ve}")
+                await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số hợp lệ (ví dụ: /user 10).")
+                return
+            
             worksheet.update_cell(target_row, user_col, users)
             reply_text = f"✅ Đã ghi nhận {users} user cho {member_name}."
         
         if reply_text:
             await bot.send_message(chat_id=msg.chat_id, text=reply_text)
             
-    except ValueError as ve:
-        print(f"Lỗi giá trị input: {ve}")
-        await bot.send_message(chat_id=msg.chat_id, text="❌ Lỗi: Vui lòng nhập số hợp lệ (ví dụ: /vol 100.5 hoặc /user 10).")
     except Exception as e:
         print(f"Lỗi khi đang xử lý tin nhắn: {e}")
         await bot.send_message(chat_id=msg.chat_id, text=f"Đã có lỗi xảy ra khi xử lý lệnh của bạn.")
